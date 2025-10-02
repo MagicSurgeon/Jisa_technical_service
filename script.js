@@ -1,18 +1,28 @@
 // DOM Content Loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize loader
+    // Initialize loader first
     initLoader();
     
-    // Initialize all functionality after loader
+    // Initialize core functionality immediately
+    initNavigation();
+    initSmoothScrolling();
+    
+    // Initialize other functionality after a short delay for better performance
     setTimeout(() => {
-        initNavigation();
         initScrollAnimations();
         initCounterAnimations();
         initContactForm();
-        initSmoothScrolling();
+        initProgressIndicator();
+        initBackToTop();
+    }, 500);
+    
+    // Initialize visual effects last for better performance
+    setTimeout(() => {
+        initGallery();
+        initPremiumEffects();
+        initMicroInteractions();
         initParallaxEffects();
-        initGallery(); // Add gallery initialization
-    }, 100);
+    }, 1000);
 });
 
 // Loader functionality
@@ -54,6 +64,12 @@ function initNavigation() {
     const hamburger = document.getElementById('hamburger');
     const navMenu = document.getElementById('nav-menu');
     const navLinks = document.querySelectorAll('.nav-link');
+
+    // Check if elements exist
+    if (!navbar || !hamburger || !navMenu) {
+        console.warn('Navigation elements not found');
+        return;
+    }
 
     // Navbar scroll effect
     window.addEventListener('scroll', () => {
@@ -163,22 +179,26 @@ function initScrollAnimations() {
 
 // Counter animations
 function initCounterAnimations() {
-    const counters = document.querySelectorAll('.stat-number');
+    const counters = document.querySelectorAll('.stat-number[data-target]');
     const counterObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const counter = entry.target;
                 const target = parseInt(counter.getAttribute('data-target'));
+                if (isNaN(target)) {
+                    console.warn('Invalid data-target value for counter:', counter);
+                    return;
+                }
                 const increment = target / 100;
                 let current = 0;
                 
                 const updateCounter = () => {
                     if (current < target) {
                         current += increment;
-                        counter.textContent = Math.ceil(current);
+                        counter.textContent = Math.ceil(current) + (counter.textContent.includes('+') ? '+' : '');
                         setTimeout(updateCounter, 20);
                     } else {
-                        counter.textContent = target;
+                        counter.textContent = target + (counter.textContent.includes('+') ? '+' : '');
                     }
                 };
                 
@@ -194,6 +214,11 @@ function initCounterAnimations() {
 // Contact form functionality
 function initContactForm() {
     const form = document.getElementById('contactForm');
+    
+    if (!form) {
+        console.warn('Contact form not found');
+        return;
+    }
     
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -583,96 +608,53 @@ function initMapVerification() {
     }
 }
 
-// Enhanced Gallery functionality
+// Simplified Gallery functionality
 function initGallery() {
-    console.log('Initializing gallery...');
-    
-    // Wait for DOM to be fully loaded
-    setTimeout(() => {
-        const galleryItems = document.querySelectorAll('.gallery-item');
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        const modal = document.getElementById('galleryModal');
+    const galleryItems = document.querySelectorAll('.gallery-item');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const modal = document.getElementById('galleryModal');
+    const closeModal = document.querySelector('.close-modal');
+
+    if (!galleryItems.length || !filterButtons.length) {
+        console.log('Gallery elements not found');
+        return;
+    }
+
+    // Simple filter functionality
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            
+            // Update active button
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+
+            // Filter items
+            galleryItems.forEach(item => {
+                const category = item.getAttribute('data-category');
+                
+                if (filter === 'all' || category === filter) {
+                    item.style.display = 'block';
+                    item.classList.remove('hidden');
+                } else {
+                    item.style.display = 'none';
+                    item.classList.add('hidden');
+                }
+            });
+        });
+    });
+
+    // Simple modal functionality
+    if (modal) {
         const modalImage = document.getElementById('modalImage');
         const modalTitle = document.getElementById('modalTitle');
         const modalDescription = document.getElementById('modalDescription');
-        const closeModal = document.querySelector('.close-modal');
-
-        console.log('Gallery items found:', galleryItems.length);
-        console.log('Filter buttons found:', filterButtons.length);
-
-        // Ensure all elements are visible initially
-        galleryItems.forEach(item => {
-            item.style.opacity = '1';
-            item.style.transform = 'translateY(0) scale(1)';
-            item.style.display = 'block';
-            item.classList.remove('hidden');
-        });
-
-        // Filter functionality - simplified and robust
-        filterButtons.forEach((button, index) => {
-            console.log(`Setting up button ${index}:`, button.textContent, button.getAttribute('data-filter'));
-            
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                console.log('Button clicked:', this.textContent);
-                
-                const filter = this.getAttribute('data-filter');
-                console.log('Filter:', filter);
-
-                // Update active button
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-
-                // Filter gallery items
-                filterGalleryItems(filter);
-            });
-        });
-
-        function filterGalleryItems(filter) {
-            console.log('Filtering with:', filter);
-            
-            galleryItems.forEach((item, index) => {
-                const category = item.getAttribute('data-category');
-                console.log(`Item ${index}: category="${category}", filter="${filter}"`);
-
-                if (filter === 'all' || category === filter) {
-                    // Show item
-                    item.classList.remove('hidden');
-                    item.style.display = 'block';
-                    setTimeout(() => {
-                        item.style.opacity = '1';
-                        item.style.transform = 'translateY(0) scale(1)';
-                    }, index * 50);
-                    console.log(`Showing item ${index}`);
-                } else {
-                    // Hide item
-                    item.classList.add('hidden');
-                    item.style.opacity = '0';
-                    item.style.transform = 'translateY(30px) scale(0.95)';
-                    setTimeout(() => {
-                        if (item.classList.contains('hidden')) {
-                            item.style.display = 'none';
-                        }
-                    }, 300);
-                    console.log(`Hiding item ${index}`);
-                }
-            });
-        }
-
-        // Modal functionality
-        let currentImageIndex = 0;
-        const galleryImages = Array.from(galleryItems);
 
         galleryItems.forEach((item, index) => {
             item.addEventListener('click', () => {
-                console.log('Gallery item clicked:', index);
-                
                 const image = item.querySelector('img');
                 const title = item.querySelector('h3');
                 const description = item.querySelector('p');
-                const features = Array.from(item.querySelectorAll('.feature-tag'));
 
                 if (image && title && description && modal && modalImage && modalTitle && modalDescription) {
                     modalImage.src = image.src;
@@ -680,253 +662,169 @@ function initGallery() {
                     modalTitle.textContent = title.textContent;
                     modalDescription.textContent = description.textContent;
 
-                    // Add features to modal
-                    updateModalFeatures(features.map(tag => tag.textContent));
-
-                    currentImageIndex = index;
                     modal.classList.add('show');
                     document.body.style.overflow = 'hidden';
-
-                    // Add navigation info
-                    updateModalNavigationInfo(index);
                 }
             });
         });
 
-        // Modal close functionality
-        function closeGalleryModal() {
-            if (modal) {
+    }
+
+    // Simple modal close functionality
+    if (closeModal && modal) {
+        closeModal.addEventListener('click', () => {
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
                 modal.classList.remove('show');
                 document.body.style.overflow = 'auto';
-                // Remove navigation info
-                const navInfo = document.querySelector('.modal-nav-info');
-                if (navInfo) navInfo.remove();
             }
-        }
-
-        if (closeModal) {
-            closeModal.addEventListener('click', closeGalleryModal);
-        }
-
-        // Close modal on background click
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    closeGalleryModal();
-                }
-            });
-        }
-
-        // Keyboard navigation
+        });
+        
+        // Escape key to close modal
         document.addEventListener('keydown', (e) => {
-            if (!modal || !modal.classList.contains('show')) return;
-
-            switch(e.key) {
-                case 'Escape':
-                    closeGalleryModal();
-                    break;
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    navigateGallery(-1);
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    navigateGallery(1);
-                    break;
+            if (e.key === 'Escape' && modal.classList.contains('show')) {
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
             }
         });
+    }
+}
 
-        // Gallery navigation function
-        function navigateGallery(direction) {
-            const visibleItems = galleryImages.filter(item => !item.classList.contains('hidden'));
-            currentImageIndex = (currentImageIndex + direction + visibleItems.length) % visibleItems.length;
-
-            const targetItem = visibleItems[currentImageIndex];
-            if (targetItem) {
-                targetItem.click();
-            }
-        }
-
-        function updateModalFeatures(features) {
-            if (!modalTitle) return;
-            
-            // Remove existing features
-            const existingFeatures = document.querySelector('.modal-features');
-            if (existingFeatures) existingFeatures.remove();
-
-            if (features.length > 0) {
-                const featuresContainer = document.createElement('div');
-                featuresContainer.className = 'modal-features';
-                featuresContainer.style.cssText = `
-                    display: flex;
-                    gap: 0.5rem;
-                    margin-top: 1rem;
-                    flex-wrap: wrap;
-                    justify-content: center;
-                `;
-
-                features.forEach(feature => {
-                    const featureElement = document.createElement('span');
-                    featureElement.className = 'modal-feature-tag';
-                    featureElement.textContent = feature;
-                    featureElement.style.cssText = `
-                        background: rgba(255, 107, 53, 0.2);
-                        backdrop-filter: blur(10px);
-                        padding: 0.3rem 0.8rem;
-                        border-radius: 15px;
-                        font-size: 0.8rem;
-                        font-family: 'Orbitron', monospace;
-                        font-weight: 600;
-                        letter-spacing: 0.5px;
-                        border: 1px solid rgba(255, 107, 53, 0.3);
-                        color: var(--white);
-                    `;
-                    featuresContainer.appendChild(featureElement);
-                });
-
-                modalTitle.parentNode.appendChild(featuresContainer);
-            }
-        }
-
-        function updateModalNavigationInfo(currentIndex) {
-            if (!modal) return;
-            
-            // Remove existing nav info
-            const existingNav = document.querySelector('.modal-nav-info');
-            if (existingNav) existingNav.remove();
-
-            const navInfo = document.createElement('div');
-            navInfo.className = 'modal-nav-info';
-            navInfo.style.cssText = `
-                position: absolute;
-                top: 2rem;
-                left: 2rem;
-                background: rgba(0, 0, 0, 0.7);
-                backdrop-filter: blur(10px);
-                padding: 0.5rem 1rem;
-                border-radius: 20px;
-                font-family: 'Orbitron', monospace;
-                font-size: 0.9rem;
-                color: var(--white);
-            `;
-
-            const visibleItems = galleryImages.filter(item => !item.classList.contains('hidden'));
-            navInfo.textContent = `${currentIndex + 1} / ${visibleItems.length}`;
-
-            modal.appendChild(navInfo);
-        }
-
-        // Image loading states
-        galleryItems.forEach(item => {
-            const img = item.querySelector('img');
-            if (!img) return;
-
-            img.addEventListener('loadstart', () => {
-                item.classList.add('loading');
-            });
-
-            img.addEventListener('load', () => {
-                item.classList.remove('loading');
-            });
-
-            img.addEventListener('error', () => {
-                item.classList.remove('loading');
-                // Show fallback image
-                img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjMjYyNjI2Ii8+CjxwYXRoIGQ9Ik00MDAgMjUwTDM1MCAyMDBINDUwTDQwMCAyNTBaIiBmaWxsPSIjZmY2YjM1Ii8+Cjx0ZXh0IHg9IjQwMCIgeT0iMzUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjAiPkltYWdlIE5vdCBBdmFpbGFibGU8L3RleHQ+Cjwvc3ZnPg==';
-                img.alt = 'Image not available';
-            });
+// Premium Effects (Optimized)
+function initPremiumEffects() {
+    // Simplified magnetic buttons effect (only for main buttons)
+    const buttons = document.querySelectorAll('.btn');
+    
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', () => {
+            button.style.transform = 'translateY(-2px) scale(1.02)';
         });
+        
+        button.addEventListener('mouseleave', () => {
+            button.style.transform = 'translateY(0) scale(1)';
+        });
+    });
 
-        // Add modal navigation arrows
-        if (modal) {
-            addModalNavigationArrows();
+    // Simplified text reveal animation
+    const titleElements = document.querySelectorAll('.section-title');
+    
+    const textObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate');
+                textObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.3 });
+
+    titleElements.forEach(element => {
+        textObserver.observe(element);
+    });
+}
+
+// Micro-interactions (Simplified)
+function initMicroInteractions() {
+    // Simple card hover effect
+    const cards = document.querySelectorAll('.service-card, .testimonial-card');
+    
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-5px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+
+    // Simple icon hover effect
+    const icons = document.querySelectorAll('.service-icon i');
+    
+    icons.forEach(icon => {
+        icon.addEventListener('mouseenter', () => {
+            icon.style.transform = 'scale(1.1)';
+        });
+        
+        icon.addEventListener('mouseleave', () => {
+            icon.style.transform = 'scale(1)';
+        });
+    });
+
+    // Ensure images are visible
+    const images = document.querySelectorAll('img');
+    
+    images.forEach(img => {
+        img.style.opacity = '1';
+        img.addEventListener('error', () => {
+            console.log('Image failed to load:', img.src);
+        });
+    });
+}
+
+// Add CSS animations for text reveal
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes textReveal {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
         }
-
-        function addModalNavigationArrows() {
-            // Remove existing arrows
-            const existingArrows = modal.querySelectorAll('.modal-nav-arrow');
-            existingArrows.forEach(arrow => arrow.remove());
-
-            const prevArrow = document.createElement('button');
-            prevArrow.innerHTML = '‹';
-            prevArrow.className = 'modal-nav-arrow modal-nav-prev';
-            prevArrow.style.cssText = `
-                position: absolute;
-                top: 50%;
-                left: 2rem;
-                transform: translateY(-50%);
-                background: rgba(255, 107, 53, 0.8);
-                backdrop-filter: blur(10px);
-                border: none;
-                color: white;
-                width: 50px;
-                height: 50px;
-                border-radius: 50%;
-                cursor: pointer;
-                font-size: 2rem;
-                transition: all 0.3s ease;
-                opacity: 0.7;
-                z-index: 1002;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            `;
-
-            const nextArrow = document.createElement('button');
-            nextArrow.innerHTML = '›';
-            nextArrow.className = 'modal-nav-arrow modal-nav-next';
-            nextArrow.style.cssText = `
-                position: absolute;
-                top: 50%;
-                right: 2rem;
-                transform: translateY(-50%);
-                background: rgba(255, 107, 53, 0.8);
-                backdrop-filter: blur(10px);
-                border: none;
-                color: white;
-                width: 50px;
-                height: 50px;
-                border-radius: 50%;
-                cursor: pointer;
-                font-size: 2rem;
-                transition: all 0.3s ease;
-                opacity: 0.7;
-                z-index: 1002;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            `;
-
-            modal.appendChild(prevArrow);
-            modal.appendChild(nextArrow);
-
-            // Navigation arrow hover effects
-            [prevArrow, nextArrow].forEach(arrow => {
-                arrow.addEventListener('mouseenter', () => {
-                    arrow.style.opacity = '1';
-                    arrow.style.transform = 'translateY(-50%) scale(1.1)';
-                    arrow.style.background = 'rgba(255, 107, 53, 1)';
-                });
-
-                arrow.addEventListener('mouseleave', () => {
-                    arrow.style.opacity = '0.7';
-                    arrow.style.transform = 'translateY(-50%) scale(1)';
-                    arrow.style.background = 'rgba(255, 107, 53, 0.8)';
-                });
-            });
-
-            // Navigation arrow click handlers
-            prevArrow.addEventListener('click', (e) => {
-                e.stopPropagation();
-                navigateGallery(-1);
-            });
-            
-            nextArrow.addEventListener('click', (e) => {
-                e.stopPropagation();
-                navigateGallery(1);
-            });
+        100% {
+            opacity: 1;
+            transform: translateY(0);
         }
+    }
+    
+    @keyframes ripple {
+        to {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
 
-        console.log('Gallery initialization complete');
-    }, 100);
+// Progress Indicator
+function initProgressIndicator() {
+    const progressIndicator = document.getElementById('progressIndicator');
+    
+    if (!progressIndicator) return;
+    
+    const updateProgress = () => {
+        const scrollTop = window.pageYOffset;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPercent = (scrollTop / docHeight) * 100;
+        
+        progressIndicator.style.width = `${scrollPercent}%`;
+    };
+    
+    window.addEventListener('scroll', throttle(updateProgress, 16));
+}
+
+// Back to Top Button
+function initBackToTop() {
+    const backToTopBtn = document.getElementById('backToTop');
+    
+    if (!backToTopBtn) return;
+    
+    const toggleBackToTop = () => {
+        if (window.pageYOffset > 300) {
+            backToTopBtn.classList.add('show');
+        } else {
+            backToTopBtn.classList.remove('show');
+        }
+    };
+    
+    backToTopBtn.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+    
+    window.addEventListener('scroll', throttle(toggleBackToTop, 16));
 }
